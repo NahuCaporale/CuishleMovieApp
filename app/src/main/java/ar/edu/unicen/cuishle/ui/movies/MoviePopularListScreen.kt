@@ -16,9 +16,13 @@ import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
@@ -43,18 +47,20 @@ fun MoviePopularListScreen(
     modifier: Modifier = Modifier,
     viewModel: MovieViewModel = hiltViewModel(),
 
-) {
+    ) {
     val moviePaging = viewModel.movies.collectAsLazyPagingItems()
     val isSearching by viewModel.isSearching.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
     val moviesSearched = viewModel.searchMovies.collectAsLazyPagingItems()
     val keyboardController = LocalSoftwareKeyboardController.current
-
+    val focusKeyboard = remember { FocusRequester() };
     Column(
         modifier = modifier.fillMaxSize()
     ) {
         if (isSearching) {
+            //keyboardController?.show(); no funciona en compose, porque no tiene el foco
+            LaunchedEffect(Unit) { focusKeyboard.requestFocus() }
             SearchBar(
                 query = searchQuery,
                 onQueryChange = { newText ->
@@ -80,7 +86,9 @@ fun MoviePopularListScreen(
                         )
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusKeyboard)
             ) {
                 when {
                     moviesSearched.loadState.refresh is LoadState.Loading -> {
